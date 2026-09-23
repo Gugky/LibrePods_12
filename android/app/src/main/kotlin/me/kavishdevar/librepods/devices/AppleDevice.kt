@@ -158,7 +158,7 @@ class AppleDevice(
         aacp.disconnect()
 //        att.disconnect()
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.CINNAMON_BUN) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             try {
                 bluetoothDevice.disconnect()
             } catch (e: Exception) {

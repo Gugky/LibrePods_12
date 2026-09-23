@@ -36,8 +36,7 @@ import android.view.View
 import android.widget.RemoteViews
 import android.widget.Toast
 import androidx.core.app.NotificationCompat
-import androidx.health.connect.client.permission.HealthPermission
-import androidx.health.connect.client.records.HeartRateRecord
+
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -1315,7 +1314,7 @@ class LibrePodsService: Service() {
         }
 
         CoroutineScope(Dispatchers.IO).launch {
-            if (SdkExtensions.getExtensionVersion(Build.VERSION_CODES.UPSIDE_DOWN_CAKE) >= 7) {
+            if (BuildConfig.PLAY_BUILD && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && SdkExtensions.getExtensionVersion(Build.VERSION_CODES.UPSIDE_DOWN_CAKE) >= 7) {
                 if (checkSelfPermission(HealthPermission.getWritePermission(HeartRateRecord::class)) != PackageManager.PERMISSION_GRANTED) return@launch
                 val healthConnectHeartRateSample = HeartRateRecord.Sample(
                     time = heartRateSample.timestamp.toJavaInstant(),

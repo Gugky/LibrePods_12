@@ -44,8 +44,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import androidx.health.connect.client.permission.HealthPermission
-import androidx.health.connect.client.records.HeartRateRecord
+
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import kotlinx.coroutines.flow.debounce
@@ -157,7 +156,11 @@ fun HeartRateScreen(
         ) {
             Spacer(modifier = Modifier.height(topPadding))
 
-            val healthPermissions = rememberPermissionState(HealthPermission.getWritePermission(HeartRateRecord::class))
+            val healthPermissions = if (BuildConfig.PLAY_BUILD && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                rememberPermissionState(HealthPermission.getWritePermission(HeartRateRecord::class))
+            } else {
+                null
+            }
 
             val defaultSpatialSpecFloat = MaterialTheme.motionScheme.defaultSpatialSpec<Float>()
 
@@ -269,10 +272,11 @@ fun HeartRateScreen(
                 }
             }
 
-            AnimatedVisibility(visible = !healthPermissions.status.isGranted) {
-                StyledListItem(
-                    contentText = stringResource(R.string.permission_healthconnect),
-                    onClick = { healthPermissions.launchPermissionRequest() },
+            if (healthPermissions != null) {
+                AnimatedVisibility(visible = !healthPermissions.status.isGranted) {
+                    StyledListItem(
+                        contentText = stringResource(R.string.permission_healthconnect),
+                        onClick = { healthPermissions.launchPermissionRequest() },
                     supportingText = stringResource(R.string.permission_description_healthconnect),
                     leadingContent = {
                         Box(
@@ -295,6 +299,7 @@ fun HeartRateScreen(
                     },
                     orientation = StyledListItemOrientation.Vertical
                 )
+                }
             }
 
             StyledToggle(

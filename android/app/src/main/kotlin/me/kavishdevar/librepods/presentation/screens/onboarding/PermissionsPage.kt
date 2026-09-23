@@ -40,8 +40,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
-import androidx.health.connect.client.permission.HealthPermission
-import androidx.health.connect.client.records.HeartRateRecord
+
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -66,18 +65,22 @@ fun PermissionsPage(
     val context = LocalContext.current
     val canDrawOverlays = remember { mutableStateOf(Settings.canDrawOverlays(context)) }
 
-    val healthPermissions = rememberPermissionState(
-        HealthPermission.getWritePermission(HeartRateRecord::class)
-    ) {
-        if (grantingAll) {
-            if (!canDrawOverlays.value) {
-                val intent = Intent(
-                    Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                    "package:${context.packageName}".toUri()
-                )
-                context.startActivity(intent)
+    val healthPermissions = if (BuildConfig.PLAY_BUILD && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        rememberPermissionState(
+            HealthPermission.getWritePermission(HeartRateRecord::class)
+        ) {
+            if (grantingAll) {
+                if (!canDrawOverlays.value) {
+                    val intent = Intent(
+                        Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                        "package:${context.packageName}".toUri()
+                    )
+                    context.startActivity(intent)
+                }
             }
         }
+    } else {
+        null
     }
 
     val phonePermissionState = rememberMultiplePermissionsState(
@@ -87,7 +90,7 @@ fun PermissionsPage(
         )
     ) {
         if (grantingAll) {
-            if (!healthPermissions.status.isGranted) healthPermissions.launchPermissionRequest()
+            if (healthPermissions != null && !healthPermissions.status.isGranted) healthPermissions.launchPermissionRequest()
             else if (!canDrawOverlays.value) canDrawOverlays.value = Settings.canDrawOverlays(context)
         }
     }
@@ -96,7 +99,7 @@ fun PermissionsPage(
     val notificationPermissionState = rememberPermissionState("android.permission.POST_NOTIFICATIONS") {
         if (grantingAll) {
             if (!phonePermissionState.allPermissionsGranted) phonePermissionState.launchMultiplePermissionRequest()
-            else if (!healthPermissions.status.isGranted) healthPermissions.launchPermissionRequest()
+            else if (healthPermissions != null && !healthPermissions.status.isGranted) healthPermissions.launchPermissionRequest()
             else if (!canDrawOverlays.value) canDrawOverlays.value = Settings.canDrawOverlays(context)
         }
     }
@@ -113,7 +116,7 @@ fun PermissionsPage(
         if (grantingAll) {
             if (!notificationPermissionState.status.isGranted) notificationPermissionState.launchPermissionRequest()
             else if (!phonePermissionState.allPermissionsGranted) phonePermissionState.launchMultiplePermissionRequest()
-            else if (!healthPermissions.status.isGranted) healthPermissions.launchPermissionRequest()
+            else if (healthPermissions != null && !healthPermissions.status.isGranted) healthPermissions.launchPermissionRequest()
             else if (!canDrawOverlays.value) canDrawOverlays.value = Settings.canDrawOverlays(context)
         }
     }
@@ -260,38 +263,40 @@ fun PermissionsPage(
                 )
             }
 
-            val animatedHealthConnectIconColor by animateColorAsState(if (healthPermissions.status.isGranted) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant)
-            val animatedHealthConnectContainerColor by animateColorAsState(if (healthPermissions.status.isGranted) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant)
+            val animatedHealthConnectIconColor by animateColorAsState(if (healthPermissions != null && healthPermissions.status.isGranted) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant)
+            val animatedHealthConnectContainerColor by animateColorAsState(if (healthPermissions != null && healthPermissions.status.isGranted) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant)
 
-            StyledListItem(
-                contentText = stringResource(R.string.permission_healthconnect),
-                onClick = if (!healthPermissions.status.isGranted) {
-                    {
-                        grantingAll = false
-                        healthPermissions.launchPermissionRequest()
+            if (healthPermissions != null) {
+                StyledListItem(
+                    contentText = stringResource(R.string.permission_healthconnect),
+                    onClick = if (!healthPermissions.status.isGranted) {
+                        {
+                            grantingAll = false
+                            healthPermissions.launchPermissionRequest()
+                        }
+                    } else null,
+                    supportingText = stringResource(R.string.permission_description_healthconnect),
+                    leadingContent = {
+                        Box(
+                            modifier = Modifier
+                                .size(48.dp)
+                                .background(
+                                    animatedHealthConnectContainerColor,
+                                    MaterialShapes.SoftBurst.normalized()
+                                        .toShape()
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = MaterialIcons.VitalSigns,
+                                contentDescription = "vital signs",
+                                modifier = Modifier.size(24.dp),
+                                tint = animatedHealthConnectIconColor
+                            )
+                        }
                     }
-                } else null,
-                supportingText = stringResource(R.string.permission_description_healthconnect),
-                leadingContent = {
-                    Box(
-                        modifier = Modifier
-                            .size(48.dp)
-                            .background(
-                                animatedHealthConnectContainerColor,
-                                MaterialShapes.SoftBurst.normalized()
-                                    .toShape()
-                            ),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = MaterialIcons.VitalSigns,
-                            contentDescription = "vital signs",
-                            modifier = Modifier.size(24.dp),
-                            tint = animatedHealthConnectIconColor
-                        )
-                    }
-                }
-            )
+                )
+            }
 
             val animatedOverlayIconColor by animateColorAsState(if (canDrawOverlays.value) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant)
             val animatedOverlayContainerColor by animateColorAsState(if (canDrawOverlays.value) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant)

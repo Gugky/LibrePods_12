@@ -77,6 +77,7 @@ android {
 
     defaultConfig {
         applicationId = "me.kavishdevar.librepods"
+        minSdk = 31
         targetSdk = 37
         versionCode = 85
         versionName = appVersionName
@@ -97,7 +98,7 @@ android {
                 signingConfig = signingConfigs.getByName("release")
             }
             defaultConfig {
-                minSdk = 33
+                minSdk = 31
             }
         }
         debug {
@@ -106,7 +107,7 @@ android {
             }
             versionNameSuffix = "-debug"
             defaultConfig {
-                minSdk = 33
+                minSdk = 31
             }
         }
     }
@@ -119,7 +120,7 @@ android {
             dimension = "env"
             buildConfigField("Boolean", "PLAY_BUILD", "true")
             versionNameSuffix = "-play"
-            minSdk = 36
+            minSdk = 31
         }
     }
     compileOptions {
@@ -180,8 +181,6 @@ dependencies {
 //    implementation(libs.hilt.compiler)
     compileOnly(libs.libxposed.api)
     implementation(libs.libxposed.service)
-    implementation(libs.play.review)
-    implementation(libs.play.review.ktx)
     implementation(libs.androidx.navigation3.ui)
     implementation(libs.androidx.navigation3.runtime)
     implementation(libs.androidx.lifecycle.viewmodel.navigation3)
@@ -191,7 +190,9 @@ dependencies {
     implementation(libs.kotlinx.serialization.cbor)
     implementation(libs.protobuf.kotlin)
 //    compileOnly(files("../../../framework-classes.jar"))
-    implementation(libs.androidx.healthconnect.client)
+    playImplementation(libs.play.review)
+    playImplementation(libs.play.review.ktx)
+    playImplementation(libs.androidx.healthconnect.client)
 }
 
 aboutLibraries {

@@ -1,6 +1,7 @@
 package me.kavishdevar.librepods
 
 import android.app.Application
+import android.os.Build
 import androidx.health.connect.client.HealthConnectClient
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
@@ -34,9 +35,13 @@ class LibrePodsApplication: Application(), XposedServiceHelper.OnServiceListener
     val heartRateRepository by lazy { HeartRateRepository(database.heartRateDao()) }
 
     val healthConnectClient: HealthConnectClient? by lazy {
-        val status = HealthConnectClient.getSdkStatus(this)
-        if (status == HealthConnectClient.SDK_AVAILABLE) {
-            HealthConnectClient.getOrCreate(this)
+        if (BuildConfig.PLAY_BUILD && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            val status = HealthConnectClient.getSdkStatus(this)
+            if (status == HealthConnectClient.SDK_AVAILABLE) {
+                HealthConnectClient.getOrCreate(this)
+            } else {
+                null
+            }
         } else {
             null
         }

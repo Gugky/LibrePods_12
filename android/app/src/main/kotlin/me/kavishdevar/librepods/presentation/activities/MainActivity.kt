@@ -46,7 +46,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
-import com.google.android.play.core.review.ReviewManagerFactory
+
 import dev.chrisbanes.haze.materials.ExperimentalHazeMaterialsApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import me.kavishdevar.librepods.BuildConfig
@@ -260,12 +260,14 @@ fun Main() {
 }
 
 private fun triggerReviewFlow(activity: Activity) {
-    val manager = ReviewManagerFactory.create(activity)
-    val request = manager.requestReviewFlow()
-    request.addOnCompleteListener { task ->
-        if (task.isSuccessful) {
-            val reviewInfo = task.result
-            manager.launchReviewFlow(activity, reviewInfo)
+    if (BuildConfig.PLAY_BUILD) {
+        val manager = ReviewManagerFactory.create(activity)
+        val request = manager.requestReviewFlow()
+        request.addOnCompleteListener { task ->
+            if (task.isSuccessful) {
+                val reviewInfo = task.result
+                manager.launchReviewFlow(activity, reviewInfo)
+            }
         }
     }
 }
